@@ -30,6 +30,3 @@ signing/*
 
 # Maven / publication artifacts
 *.asc
-
-# Generated docs
-docs/
