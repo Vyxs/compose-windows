@@ -1,0 +1,35 @@
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+out/
+.cache/
+
+# Kotlin/Compose
+.kotlinc/
+.kotlin/
+composeApp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local settings & secrets
+local.properties
+*.keystore
+*.jks
+signing/*
+
+# Maven / publication artifacts
+*.asc
+
+# Generated docs
+docs/
