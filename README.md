@@ -7,6 +7,8 @@ A tiny library to build a **Windows‑style title bar** in Compose Desktop while
 
 > JVM 21 · Compose Multiplatform · Windows 10/11
 
+![Windows Snap demo](docs/media/snap.gif)
+
 ---
 
 ## Installation
