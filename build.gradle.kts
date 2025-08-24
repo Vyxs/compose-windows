@@ -1,8 +1,12 @@
-plugins { }
+plugins {
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+}
 
-allprojects {
+nexusPublishing {
     repositories {
-        mavenCentral()
-        google()
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
     }
 }

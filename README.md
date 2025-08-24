@@ -1,5 +1,7 @@
 # Compose Windows
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/fr.vyxs.compose.windows/compose-windows-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/fr.vyxs.compose.windows/compose-windows-core)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 
 A tiny library to build a **Windows‑style title bar** in Compose Desktop while keeping **native window behaviors** (Snap, minimize, maximize, close). Provides a clean DSL: `window {}`, `titleBar {}`, and `content {}`.
 
