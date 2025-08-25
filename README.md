@@ -2,12 +2,21 @@
 [![Maven Central](https://img.shields.io/maven-central/v/fr.vyxs.compose.windows/compose-windows-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/fr.vyxs.compose.windows/compose-windows-core)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-
-A tiny library to build a **Windows‑style title bar** in Compose Desktop while keeping **native window behaviors** (Snap, minimize, maximize, close). Provides a clean DSL: `window {}`, `titleBar {}`, and `content {}`.
+Compose Windows is a tiny library to build a **Windows-style custom title bar** in Compose Desktop while keeping **native OS behaviors**: Snap, minimize, maximize, close.  
+The DSL stays clean and familiar: `window {}`, `titleBar {}`, `content {}`.
 
 > JVM 21 · Compose Multiplatform · Windows 10/11
 
 ![Windows Snap demo](docs/media/snap.gif)
+
+---
+
+## What’s new in 0.2.0
+
+- The `WindowsApp { … }` block is now **fully `@Composable`** — use `remember`, `derivedStateOf`, `collectAsState`, etc., directly in the top-level DSL.
+- New overload: `WindowsApp(configure) { … }` to separate non-composable window config from composable UI.
+- Runtime cleaned up: smaller methods, no nested functions, same native Snap behavior.
+- Updated demo with a simple **“plus”** action in the title bar.
 
 ---
 
@@ -17,7 +26,7 @@ A tiny library to build a **Windows‑style title bar** in Compose Desktop while
 
 ```kotlin
 dependencies {
-    implementation("fr.vyxs.compose.windows:compose-windows-core:0.1.0")
+    implementation("fr.vyxs.compose.windows:compose-windows-core:0.2.0")
 }
 ```
 
@@ -31,24 +40,40 @@ Requires:
 
 ## Quick start
 
+Use the new overload to separate window config (not composable) and UI (composable):
+
 ```kotlin
-fun main() = WindowsApp {
-    window {
-        title("Windows App")
-        size(900, 600)
-        minSize(400, 400)
-        resizable(true)
-        cornerRadius(2.dp)
-        titleBarColor(Color(0x202020))
-        titleBarHeight(40.dp)
-    }
+fun main() = WindowsApp({
+    title("Compose Windows — Demo")
+    size(960, 640)
+    resizable(true)
+    cornerRadius(6.dp)
+    titleBarColor(Color(0xFF202020))
+    titleBarHeight(44.dp)
+}) {
+    Demo()
+}
+
+@Composable
+private fun WindowsAppScope.Demo() {
+    var counter by remember { mutableStateOf(0) }
 
     titleBar {
+        start {
+            Row(Modifier.fillMaxHeight().padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(FeatherIcons.Monitor, "App", tint = Color(0xFFE6E6E6))
+                Spacer(Modifier.width(8.dp))
+                Text("Compose Windows", color = Color(0xFFE6E6E6), fontSize = 14.sp)
+            }
+        }
         end {
             Row(Modifier.fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
-                Minimize { Icon(FeatherIcons.Minus, null, tint = Color(0xFFE6E6E6)) }
-                Maximize { Icon(FeatherIcons.Square, null, tint = Color(0xFFE6E6E6)) }
-                Close { Icon(FeatherIcons.X, null, tint = Color(0xFFFFEEEE)) }
+                TitleBarButton(backgroundColor = Color(0xFF202020), onClick = { counter++ }) {
+                    Icon(FeatherIcons.PlusCircle, "Plus", tint = Color(0xFFE6E6E6))
+                }
+                Minimize { Icon(FeatherIcons.Minus, "Minimize", tint = Color(0xFFE6E6E6)) }
+                Maximize { Icon(FeatherIcons.Square, "Maximize", tint = Color(0xFFE6E6E6)) }
+                Close    { Icon(FeatherIcons.X, "Close", tint = Color(0xFFFFEEEE)) }
             }
         }
     }
@@ -56,7 +81,7 @@ fun main() = WindowsApp {
     content {
         MaterialTheme {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Hello World", color = Color.Black)
+                Text("Counter: $counter", color = Color.Black)
             }
         }
     }
@@ -68,7 +93,8 @@ fun main() = WindowsApp {
 ## API overview
 
 ```kotlin
-WindowsApp { /* WindowsAppScope */ }
+WindowsApp(block: @Composable WindowsAppScope.() -> Unit)
+WindowsApp(configure: WindowConfig.() -> Unit, block: @Composable WindowsAppScope.() -> Unit)
 
 class WindowsAppScope {
   fun window(block: WindowConfig.() -> Unit)
@@ -113,24 +139,14 @@ Utility composables for the title bar:
 * `TitleBarScope.Close(...)`
 * `TitleBarButton(...)` (generic)
 
-Color helpers:
-
-* `Color.darker(factor)` · `Color.lighter(factor)` · `Color.tintRed()` · `Color.grayscale()`
-
 ---
 
-## Notes & limits
+## Notes
 
-* Designed and tested on **Windows** (Snap support requires native window decorations via FlatLaf).
-* Uses **FlatLaf** to enable custom window decorations while preserving OS behaviors.
-* Works with Compose Desktop; Linux/macOS are not primary targets.
+* Built for **Windows** (Snap relies on native decorations via FlatLaf).
+* Uses **FlatLaf** window decorations to keep OS behaviors.
+* Linux/macOS are not primary targets.
 * ⚠️ Important: when you place composables inside `start {}`, `center {}`, or `end {}`, that area of the title bar **cannot be used to drag the window**. Currently only the empty space of the title bar is draggable.
-
-### Future improvements
-
-* Allowing drag even when elements like `center { Text("title") }` are present.
-* Making the **entire window directly composable**, removing some Swing glue code.
-
 ---
 
 ## Development
@@ -140,20 +156,6 @@ Run the sample app:
 ```bash
 ./gradlew :sample:run
 ```
-
-Publish locally:
-
-```bash
-./gradlew publishToMavenLocal
-```
-
-Release to Maven Central (example):
-
-```bash
-./gradlew publish
-```
-
-Provide standard `signing.*` and `ossrh*` properties via `gradle.properties` or environment variables.
 
 ---
 
