@@ -4,85 +4,93 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
-import fr.vyxs.compose.windows.runtime.WindowsWindow
 import java.awt.EventQueue
 import kotlin.math.roundToInt
 
 /**
- * Launches a Windows-style Compose application with a customizable title bar while preserving
- * native Windows window behaviors (e.g., Snap, maximize, minimize, close).
+ * Launches a Compose Desktop application with a Windows-style custom title bar
+ * while preserving native OS behaviors such as Snap, maximize, minimize, and close.
  *
- * Use [WindowsAppScope.window], [WindowsAppScope.titleBar], and [WindowsAppScope.content]
- * inside the provided [block] to configure the window and its UI.
- *
- * Example:
- * ```kotlin
- * fun main() = WindowsApp {
- *   window { title("Demo"); size(900, 600) }
- *   titleBar { end { /* custom buttons */ } }
- *   content { /* app content */ }
- * }
- * ```
+ * This overload separates native window configuration from UI composition:
+ * - [configure] sets the window properties (title, size, etc.)
+ * - [block] is a fully composable DSL with access to all standard Compose APIs
+ *   (e.g., remember, derivedStateOf, CompositionLocal, collectAsState)
  */
-fun WindowsApp(block: WindowsAppScope.() -> Unit) {
-    val scope = WindowsAppScope().apply(block)
-    EventQueue.invokeLater { scope.build().show() }
+fun WindowsApp(
+    configure: WindowConfig.() -> Unit,
+    block: @Composable WindowsAppScope.() -> Unit
+) {
+    val scope = WindowsAppScope().apply { window.configure() }
+    EventQueue.invokeLater { scope.build(block).show() }
 }
 
 /**
- * Scope for configuring a Windows-style application window.
+ * Launches the application using a single composable DSL block that defines both
+ * window configuration and UI composition through [WindowsAppScope].
+ */
+fun WindowsApp(block: @Composable WindowsAppScope.() -> Unit) {
+    val scope = WindowsAppScope()
+    EventQueue.invokeLater { scope.build(block).show() }
+}
+
+/**
+ * DSL scope for configuring the native window and declaring UI.
  *
- * Use this scope to:
- * - Configure the native window via [window]
- * - Configure the custom title bar via [titleBar]
- * - Provide the main Compose [content]
+ * Responsibilities:
+ * - [window]: configure native properties (title, size, resizable, etc.)
+ * - [titleBar]: declare custom title bar UI via start/center/end slots
+ * - [content]: declare the main application content
+ *
+ * The [WindowsApp] block is composable, so any standard Compose API can be used
+ * at the top level (e.g., `val state = remember { ... }`) and will be captured
+ * by the slot lambdas declared through [titleBar] and [content].
  */
 class WindowsAppScope {
     internal val window = WindowConfig()
     internal val bar = TitleBarConfig()
     internal var contentComposable: (@Composable () -> Unit)? = null
 
-    /** Configures the native window (title, size, resizable, etc.). */
+    /**
+     * Configures the native window (title, size, resizability, rounded corners, colors).
+     * This is typically called from the non-composable [WindowsApp] `configure` parameter.
+     */
     fun window(block: WindowConfig.() -> Unit) = window.block()
 
-    /** Configures the custom title bar slots (start, center, end). */
+    /**
+     * Declares the custom title bar UI by providing [start], [center], and [end] slots.
+     * Each slot receives a [TitleBarScope] with the resolved color and native actions.
+     */
     fun titleBar(block: TitleBarConfig.() -> Unit) = bar.block()
 
-    /** Sets the application content Composable. */
+    /**
+     * Declares the main content Composable of the application window.
+     */
     fun content(block: @Composable () -> Unit) { contentComposable = block }
 
-    internal fun build() =
-        WindowsWindow(window, bar, contentComposable)
+    internal fun build(setup: @Composable WindowsAppScope.() -> Unit) =
+        fr.vyxs.compose.windows.runtime.WindowsWindow(window, this, setup)
 }
 
 /**
- * Window configuration for title, size, resizability, rounded corners and title bar appearance.
- *
- * Only negative values are prevented; very large values are allowed.
- * Title may be empty.
+ * Mutable native window configuration. Invalid inputs (e.g., negative sizes)
+ * are coerced to safe values, and minimum constraints are enforced.
  */
 class WindowConfig {
-    /** Window title shown to the OS (can be empty if you want). */
     var title: String = "App"
-        set(value) {
-            field = value
-        }
+        set(value) { field = value }
 
-    /** Initial width in pixels (negative values coerced to 0). */
     var width: Int = 900
         set(value) {
-            val nonNegative = value.coerceAtLeast(0)
-            field = if (minWidth != null) nonNegative.coerceAtLeast(minWidth!!) else nonNegative
+            val v = value.coerceAtLeast(0)
+            field = if (minWidth != null) v.coerceAtLeast(minWidth!!) else v
         }
 
-    /** Initial height in pixels (negative values coerced to 0). */
     var height: Int = 600
         set(value) {
-            val nonNegative = value.coerceAtLeast(0)
-            field = if (minHeight != null) nonNegative.coerceAtLeast(minHeight!!) else nonNegative
+            val v = value.coerceAtLeast(0)
+            field = if (minHeight != null) v.coerceAtLeast(minHeight!!) else v
         }
 
-    /** Optional minimum width in pixels (negative values coerced to 0). */
     var minWidth: Int? = null
         set(value) {
             val v = value?.coerceAtLeast(0)
@@ -90,7 +98,6 @@ class WindowConfig {
             if (v != null && width < v) width = v
         }
 
-    /** Optional minimum height in pixels (negative values coerced to 0). */
     var minHeight: Int? = null
         set(value) {
             val v = value?.coerceAtLeast(0)
@@ -98,83 +105,45 @@ class WindowConfig {
             if (v != null && height < v) height = v
         }
 
-    /** Whether the window can be resized by the user. */
     var resizable: Boolean = true
 
-    /** Corner radius in pixels (negative values coerced to 0). */
     var cornerRadius: Int = 2
-        set(value) {
-            field = value.coerceAtLeast(0)
-        }
+        set(value) { field = value.coerceAtLeast(0) }
 
-    /** Title bar background color (ARGB int). */
     var titleBarColor: Int = 0x202020
 
-    /** Title bar height in pixels (negative values coerced to 0). */
     var titleBarHeight: Int = 40
-        set(value) {
-            field = value.coerceAtLeast(0)
-        }
+        set(value) { field = value.coerceAtLeast(0) }
 
-    /** Sets the window title (can be empty). */
     fun title(value: String) { this.title = value }
-
-    /** Sets the initial window size in pixels (negatives coerced to 0). */
     fun size(w: Int, h: Int) { this.width = w; this.height = h }
-
-    /** Sets the initial window size using [Dp] (negatives coerced to 0). */
     fun size(w: Dp, h: Dp) { size(w.value.roundToInt(), h.value.roundToInt()) }
-
-    /** Sets the minimum window size in pixels (negatives coerced to 0). */
     fun minSize(w: Int, h: Int) { this.minWidth = w; this.minHeight = h }
-
-    /** Sets the minimum window size using [Dp] (negatives coerced to 0). */
     fun minSize(w: Dp, h: Dp) { minSize(w.value.roundToInt(), h.value.roundToInt()) }
-
-    /** Sets only the minimum width (negatives coerced to 0). */
     fun minWidth(px: Int) { this.minWidth = px }
-
-    /** Sets only the minimum height (negatives coerced to 0). */
     fun minHeight(px: Int) { this.minHeight = px }
-
-    /** Enables or disables window resizing. */
     fun resizable(isResizable: Boolean) { this.resizable = isResizable }
-
-    /** Sets the corner radius from a [Dp] (negatives coerced to 0). */
     fun cornerRadius(radius: Dp) { this.cornerRadius = radius.value.roundToInt() }
-
-    /** Sets the title bar color from a Compose [Color]. */
     fun titleBarColor(color: Color) { this.titleBarColor = color.toArgb() }
-
-    /** Sets the title bar height from a [Dp] (negatives coerced to 0). */
     fun titleBarHeight(height: Dp) { this.titleBarHeight = height.value.roundToInt() }
 }
 
 /**
- * Title bar configuration.
- *
- * The title bar is split into three slots: [start], [center], and [end]. Each slot receives a
- * [TitleBarScope] granting access to the current title bar color and window [actions].
+ * Declarative container for title bar slots. Each slot is a Composable lambda that
+ * receives a [TitleBarScope] bound to the current window instance.
  */
 class TitleBarConfig {
     internal var startContent: (@Composable TitleBarScope.() -> Unit)? = null
     internal var centerContent: (@Composable TitleBarScope.() -> Unit)? = null
     internal var endContent: (@Composable TitleBarScope.() -> Unit)? = null
 
-    /** Defines the start (left) slot content of the title bar. */
     fun start(block: @Composable TitleBarScope.() -> Unit) { startContent = block }
-
-    /** Defines the center slot content of the title bar. */
     fun center(block: @Composable TitleBarScope.() -> Unit) { centerContent = block }
-
-    /** Defines the end (right) slot content of the title bar. */
     fun end(block: @Composable TitleBarScope.() -> Unit) { endContent = block }
 }
 
 /**
- * Window actions available to title bar elements.
- *
- * Use these callbacks to minimize, toggle maximize/restore, or close the window.
+ * Native window action callbacks for title bar controls.
  */
 class WindowActions(
     val minimize: () -> Unit,
@@ -183,10 +152,8 @@ class WindowActions(
 )
 
 /**
- * Scope provided to title bar slot content.
- *
- * Exposes the resolved [titleBarColor] for styling and [actions] for integrating native window
- * behavior into custom controls.
+ * Scope passed to title bar slot content. Provides the resolved [titleBarColor]
+ * and [actions] to integrate custom UI with native window controls.
  */
 class TitleBarScope internal constructor(
     val titleBarColor: Color,

@@ -1,5 +1,6 @@
 package fr.vyxs.compose.windows.runtime
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -7,7 +8,9 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,18 +18,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.vyxs.compose.windows.api.TitleBarScope
-import androidx.compose.foundation.background
 
 /**
- * Generic title bar button with hover/pressed feedback.
- *
- * @param width Button width.
- * @param height Button height.
- * @param backgroundColor Base background color.
- * @param hoverBackgroundColor Background color on hover.
- * @param pressedBackgroundColor Background color when pressed.
- * @param onClick Optional click handler.
- * @param content Button content.
+ * Generic title bar button with hover and press feedback.
+ * The button surface color adapts to interaction state.
  */
 @Composable
 fun TitleBarButton(
@@ -57,13 +52,7 @@ fun TitleBarButton(
 }
 
 /**
- * A minimize button bound to the current window via [TitleBarScope.actions].
- *
- * @param backgroundColor Base background color.
- * @param hoverBackgroundColor Background color on hover.
- * @param pressedBackgroundColor Background color when pressed.
- * @param beforeAction Optional callback executed before minimizing.
- * @param content Composable content placed inside the button.
+ * Minimizes the window using [TitleBarScope.actions].
  */
 @Composable
 fun TitleBarScope.Minimize(
@@ -81,13 +70,7 @@ fun TitleBarScope.Minimize(
 )
 
 /**
- * A maximize/restore button bound to the current window via [TitleBarScope.actions].
- *
- * @param backgroundColor Base background color.
- * @param hoverBackgroundColor Background color on hover.
- * @param pressedBackgroundColor Background color when pressed.
- * @param beforeAction Optional callback executed before toggling maximize.
- * @param content Composable content placed inside the button.
+ * Toggles maximize/restore using [TitleBarScope.actions].
  */
 @Composable
 fun TitleBarScope.Maximize(
@@ -105,13 +88,7 @@ fun TitleBarScope.Maximize(
 )
 
 /**
- * A close button bound to the current window via [TitleBarScope.actions].
- *
- * @param backgroundColor Base background color.
- * @param hoverBackgroundColor Background color on hover. Defaults to a red-tinted variant.
- * @param pressedBackgroundColor Background color when pressed. Defaults to a red-tinted variant.
- * @param beforeAction Optional callback executed before closing.
- * @param content Composable content placed inside the button.
+ * Closes the window using [TitleBarScope.actions].
  */
 @Composable
 fun TitleBarScope.Close(
