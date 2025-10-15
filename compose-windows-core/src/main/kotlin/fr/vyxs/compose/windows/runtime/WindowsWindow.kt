@@ -151,6 +151,11 @@ internal class WindowsWindow(
 
     /** Prepares window action callbacks and the [TitleBarScope]. */
     private fun initActions() {
+        val closeHandler = {
+            scope._isClosing.value = true
+            frame.dispose()
+        }
+
         val actions = WindowActions(
             minimize = { frame.extendedState = frame.extendedState or Frame.ICONIFIED },
             toggleMaximize = {
@@ -159,8 +164,12 @@ internal class WindowsWindow(
                     if ((st and Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) Frame.NORMAL
                     else Frame.MAXIMIZED_BOTH
             },
-            close = { frame.dispose() }
+            close = closeHandler
         )
+
+        // Initialize WindowsAppScope close action
+        scope.closeAction = closeHandler
+
         barScope = TitleBarScope(titleBg, actions)
     }
 

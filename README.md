@@ -2,7 +2,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/fr.vyxs.compose.windows/compose-windows-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/fr.vyxs.compose.windows/compose-windows-core)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-Compose Windows is a tiny library to build a **Windows-style custom title bar** in Compose Desktop while keeping **native OS behaviors**: Snap, minimize, maximize, close.  
+Compose Windows is a tiny library to build a **Windows-style custom title bar** in Compose Desktop while keeping **native OS behaviors**: Snap, minimize, maximize, close.
 The DSL stays clean and familiar: `window {}`, `titleBar {}`, `content {}`.
 
 > JVM 21 · Compose Multiplatform · Windows 10/11
@@ -11,12 +11,18 @@ The DSL stays clean and familiar: `window {}`, `titleBar {}`, `content {}`.
 
 ---
 
-## What’s new in 0.2.0
+## What's new in 0.3.0
+
+- **Programmatic window control**: `close()` function directly accessible in `WindowsAppScope`
+- **Closing state observer**: `isClosing` observable state for exit animations
+- **Public color utilities**: `lighter()`, `darker()`, `grayscale()`, `tintRed()` now available for custom UI styling
+
+## What's new in 0.2.0
 
 - The `WindowsApp { … }` block is now **fully `@Composable`** — use `remember`, `derivedStateOf`, `collectAsState`, etc., directly in the top-level DSL.
 - New overload: `WindowsApp(configure) { … }` to separate non-composable window config from composable UI.
 - Runtime cleaned up: smaller methods, no nested functions, same native Snap behavior.
-- Updated demo with a simple **“plus”** action in the title bar.
+- Updated demo with a simple **"plus"** action in the title bar.
 
 ---
 
@@ -26,7 +32,7 @@ The DSL stays clean and familiar: `window {}`, `titleBar {}`, `content {}`.
 
 ```kotlin
 dependencies {
-    implementation("fr.vyxs.compose.windows:compose-windows-core:0.2.0")
+    implementation("fr.vyxs.compose.windows:compose-windows-core:0.3.0")
 }
 ```
 
@@ -90,6 +96,41 @@ private fun WindowsAppScope.Demo() {
 
 ---
 
+## Programmatic window control (0.3.0+)
+
+Close the window from anywhere in your composable code:
+
+```kotlin
+@Composable
+fun WindowsAppScope.MyApp() {
+    var shouldExit by remember { mutableStateOf(false) }
+
+    // Close from a LaunchedEffect
+    LaunchedEffect(shouldExit) {
+        if (shouldExit) {
+            delay(500) // Optional: wait for animations
+            close()
+        }
+    }
+
+    content {
+        Column {
+            // Close from a button click
+            Button(onClick = { close() }) {
+                Text("Exit")
+            }
+
+            // Observe closing state for animations
+            if (isClosing.value) {
+                Text("Closing...", Modifier.animateAlpha())
+            }
+        }
+    }
+}
+```
+
+---
+
 ## API overview
 
 ```kotlin
@@ -100,6 +141,8 @@ class WindowsAppScope {
   fun window(block: WindowConfig.() -> Unit)
   fun titleBar(block: TitleBarConfig.() -> Unit)
   fun content(block: @Composable () -> Unit)
+  fun close()                              // NEW in 0.3.0: Programmatically close the window
+  val isClosing: State<Boolean>            // NEW in 0.3.0: Observable closing state
 }
 
 class WindowConfig {
@@ -132,12 +175,19 @@ class TitleBarScope(val titleBarColor: Color, val actions: WindowActions)
 class WindowActions(val minimize: () -> Unit, val toggleMaximize: () -> Unit, val close: () -> Unit)
 ```
 
-Utility composables for the title bar:
+### Composables for the title bar
 
-* `TitleBarScope.Minimize(...)`
-* `TitleBarScope.Maximize(...)`
-* `TitleBarScope.Close(...)`
-* `TitleBarButton(...)` (generic)
+* `TitleBarScope.Minimize(...)` - Minimize button
+* `TitleBarScope.Maximize(...)` - Maximize/restore button
+* `TitleBarScope.Close(...)` - Close button
+* `TitleBarButton(...)` - Generic button
+
+### Color utilities (NEW in 0.3.0)
+
+* `Color.lighter(factor: Float)` - Blend toward white
+* `Color.darker(factor: Float)` - Blend toward black
+* `Color.grayscale()` - Calculate luminance value
+* `Color.tintRed(intensity: Float)` - Apply red tint
 
 ---
 

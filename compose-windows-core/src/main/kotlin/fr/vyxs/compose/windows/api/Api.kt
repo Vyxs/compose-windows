@@ -1,6 +1,8 @@
 package fr.vyxs.compose.windows.api
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
@@ -40,6 +42,8 @@ fun WindowsApp(block: @Composable WindowsAppScope.() -> Unit) {
  * - [window]: configure native properties (title, size, resizable, etc.)
  * - [titleBar]: declare custom title bar UI via start/center/end slots
  * - [content]: declare the main application content
+ * - [close]: programmatically close the window
+ * - [isClosing]: observe the closing state for animations
  *
  * The [WindowsApp] block is composable, so any standard Compose API can be used
  * at the top level (e.g., `val state = remember { ... }`) and will be captured
@@ -49,6 +53,15 @@ class WindowsAppScope {
     internal val window = WindowConfig()
     internal val bar = TitleBarConfig()
     internal var contentComposable: (@Composable () -> Unit)? = null
+
+    internal var closeAction: (() -> Unit)? = null
+    internal val _isClosing = mutableStateOf(false)
+
+    /**
+     * Observable state indicating whether the window is closing.
+     * Useful for triggering exit animations before the window disposes.
+     */
+    val isClosing: State<Boolean> get() = _isClosing
 
     /**
      * Configures the native window (title, size, resizability, rounded corners, colors).
@@ -66,6 +79,15 @@ class WindowsAppScope {
      * Declares the main content Composable of the application window.
      */
     fun content(block: @Composable () -> Unit) { contentComposable = block }
+
+    /**
+     * Programmatically closes the current window.
+     * Can be called from anywhere within the WindowsAppScope composable context.
+     * Sets [isClosing] to true before disposing the window.
+     */
+    fun close() {
+        closeAction?.invoke() ?: error("Window not initialized yet. close() can only be called after the window is shown.")
+    }
 
     internal fun build(setup: @Composable WindowsAppScope.() -> Unit) =
         fr.vyxs.compose.windows.runtime.WindowsWindow(window, this, setup)

@@ -101,6 +101,16 @@ private fun WindowsAppScope.DemoApp() {
                     }
                     Text("Counter: $counter", fontSize = 16.sp, color = Color(0xFF222222))
                 }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { close() }) {
+                        Icon(FeatherIcons.LogOut, contentDescription = "Close")
+                        Spacer(Modifier.width(8.dp))
+                        Text("Close Window")
+                    }
+                    if (isClosing.value) {
+                        Text("Closing...", fontSize = 14.sp, color = Color(0xFF888888))
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "Try dragging the title bar and snapping the window to edges or corners.",

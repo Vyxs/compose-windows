@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
  * Returns a darker variant of this [Color] by blending toward black.
  * @param factor Range [0, 1]. Higher makes the color darker.
  */
-internal fun Color.darker(factor: Float): Color {
+fun Color.darker(factor: Float): Color {
     fun ch(v: Float) = (v * (1f - factor)).coerceIn(0f, 1f)
     return Color(ch(red), ch(green), ch(blue), alpha)
 }
@@ -15,7 +15,7 @@ internal fun Color.darker(factor: Float): Color {
  * Returns a lighter variant of this [Color] by blending toward white.
  * @param factor Range [0, 1]. Higher makes the color lighter.
  */
-internal fun Color.lighter(factor: Float): Color {
+fun Color.lighter(factor: Float): Color {
     fun ch(v: Float) = (v + (1f - v) * factor).coerceIn(0f, 1f)
     return Color(ch(red), ch(green), ch(blue), alpha)
 }
@@ -24,14 +24,14 @@ internal fun Color.lighter(factor: Float): Color {
  * Computes a simple luminance-like grayscale value of this [Color].
  * @return Value in [0, 1], where 0 is black and 1 is white.
  */
-internal fun Color.grayscale(): Float =
+fun Color.grayscale(): Float =
     (0.299f * red + 0.587f * green + 0.114f * blue)
 
 /**
  * Tints this [Color] toward a soft red tone while preserving alpha.
  * @param intensity Range [0, 1]. Higher increases the red influence.
  */
-internal fun Color.tintRed(intensity: Float = 0.25f): Color {
+fun Color.tintRed(intensity: Float = 0.25f): Color {
     val a = intensity.coerceIn(0f, 1f)
     val r = 1f
     val g = 0.2f
